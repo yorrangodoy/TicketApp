@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'auth-service'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['auth-service:3000']
+
+  - job_name: 'event-service'
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - 'ticket-system-distributed-event-service-1:3000'
+          - 'ticket-system-distributed-event-service-2:3000'
+
+  - job_name: 'order-service'
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - 'ticket-system-distributed-order-service-1:3000'
+          - 'ticket-system-distributed-order-service-2:3000'
+
+  - job_name: 'payment-service'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['payment-service:3000']
+
+  - job_name: 'notification-service'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['notification-service:3000']
