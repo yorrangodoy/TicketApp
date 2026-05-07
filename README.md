@@ -1,216 +1,133 @@
-\# 🎫 Ticket System Distributed
+# Ticket System Distributed
 
+Sistema distribuído de venda de ingressos online desenvolvido como projeto acadêmico na disciplina de Sistemas Distribuídos e Mobile — UNISUL.
 
+O sistema simula um cenário real de e-commerce de ingressos, aplicando padrões de arquitetura distribuída com foco em escalabilidade, resiliência, controle de concorrência e observabilidade.
 
-Sistema distribuído de venda de ingressos online, desenvolvido como projeto A3 da disciplina de \*\*Sistemas Distribuídos e Mobile\*\* — UNISUL.
+---
 
+## Arquitetura
 
-
-\## 📋 Sobre o Projeto
-
-
-
-Sistema que permite a criação de eventos e venda de ingressos online, com arquitetura baseada em microsserviços, comunicação assíncrona, controle de concorrência e observabilidade.
-
-
-
-\## 🏗️ Arquitetura
-
-&#x20;               ┌─────────────┐
-
-&#x20;               │   Cliente    │
-
-&#x20;               │ (Postman)   │
-
-&#x20;               └──────┬──────┘
-
-&#x20;                      │
-
-&#x20;               ┌──────▼──────┐
-
-&#x20;               │ API Gateway │
-
-&#x20;               │   (Kong)    │
-
-&#x20;               └──────┬──────┘
-
-&#x20;                      │
-
-&#x20;               ┌──────▼──────┐
-
-&#x20;               │Load Balancer│
-
-&#x20;               │  (Nginx)    │
-
-&#x20;               └──────┬──────┘
-
-&#x20;                      │
-
-&#x20;     ┌────────────────┼────────────────┐
-
-&#x20;     │                │                │
-
-┌──────▼──────┐ ┌──────▼──────┐ ┌──────▼──────┐
-
-│auth-service │ │event-service│ │order-service │
-
-│  (Node.js)  │ │  (Node.js)  │ │  (Node.js)  │
-
-└──────┬──────┘ └──────┬──────┘ └──────┬──────┘
-
-│                │                │
-
-│                │         ┌──────▼──────┐
-
-│                │         │  payment-   │
-
-│                │         │  service    │
-
-│                │         │   (mock)    │
-
-│                │         └──────┬──────┘
-
-│                │                │
-
-└────────┬───────┘         ┌──────▼──────┐
-
-│                 │notification-│
-
-┌──────▼──────┐          │  service    │
-
-│  PostgreSQL │          │   (mock)    │
-
-└─────────────┘          └──────┬──────┘
-
+Client (Postman/Insomnia)
 │
-
-┌──────▼──────┐
-
-│  RabbitMQ   │
-
-│   (fila)    │
-
-└─────────────┘
-
-
-
-\## 🧩 Microsserviços
-
-
-
-| Serviço | Responsabilidade |
-
-|---------|-----------------|
-
-| \*\*auth-service\*\* | Cadastro de usuários, login, autenticação JWT |
-
-| \*\*event-service\*\* | CRUD de eventos (admin), listagem de eventos |
-
-| \*\*order-service\*\* | Fluxo de compra, controle de concorrência, idempotência |
-
-| \*\*payment-service\*\* | Simulação de gateway de pagamento (boleto, PIX, cartão) |
-
-| \*\*notification-service\*\* | Simulação de envio de e-mail de confirmação |
+▼
+┌─────────┐
+│  Kong    │  API Gateway — roteamento e controle de acesso
+└────┬────┘
+▼
+┌─────────┐
+│  Nginx   │  Load Balancer — distribuição de carga
+└────┬────┘
+│
+┌────┼──────────────┐
+▼    ▼              ▼
+Auth  Event (x2)   Order (x2) ──▶ Payment (mock)
+│    │              │
+│    │              ▼
+│    │         RabbitMQ ──▶ Notification (mock)
+│    │
+▼    ▼
+PostgreSQL
+│
+┌────┼────┐
+▼         ▼
+Prometheus  Grafana
 
 
+---
 
-\## 🛠️ Stack Tecnológica
+## Serviços
 
+| Serviço | Porta | Responsabilidade |
+|---------|-------|------------------|
+| auth-service | 3000 | Cadastro, login e autenticação via JWT |
+| event-service | 3000 | CRUD de eventos (perfil admin) |
+| order-service | 3000 | Compra de ingressos com controle de concorrência e idempotência |
+| payment-service | 3000 | Stub de gateway de pagamento (boleto, PIX, cartão) |
+| notification-service | 3000 | Stub de envio de e-mail via consumo de fila |
 
+---
 
-| Camada | Tecnologia |
+## Stack
 
-|--------|-----------|
+| Camada | Tecnologia | Justificativa |
+|--------|-----------|---------------|
+| Backend | Node.js + Express + TypeScript | Ecossistema unificado, tipagem estática, produtividade |
+| Banco de Dados | PostgreSQL 15 | ACID, suporte a lock otimista, confiabilidade |
+| Fila | RabbitMQ | Comunicação assíncrona, desacoplamento entre serviços |
+| API Gateway | Kong 3.6 | Roteamento por path, rate limiting, extensível |
+| Load Balancer | Nginx | Distribuição round-robin entre instâncias |
+| Logs | Winston | Logs estruturados em JSON |
+| Métricas | Prometheus + Grafana | Coleta e visualização de latência, erros e throughput |
+| Orquestração | Docker Compose | Ambiente reproduzível com um único comando |
 
-| Linguagem | Node.js + TypeScript |
+---
 
-| API Gateway | Kong |
+## Requisitos Distribuídos
 
-| Load Balancer | Nginx |
+**Controle de Concorrência** — Lock otimista no banco para prevenir overselling mesmo sob carga simultânea.
 
-| Banco de Dados | PostgreSQL |
+**Resiliência** — Retry com backoff exponencial e fallback em falhas de comunicação entre serviços.
 
-| Fila Assíncrona | RabbitMQ |
+**Idempotência** — Chave única por requisição de compra, impedindo duplicidade em cenários de retry.
 
-| Observabilidade | Winston (logs) + Prometheus + Grafana |
+**Comunicação Assíncrona** — RabbitMQ desacopla o fluxo de pagamento e notificação do fluxo principal de compra.
 
-| Containerização | Docker + Docker Compose |
+---
 
+## Como Executar
 
-
-\## ⚙️ Requisitos Distribuídos
-
-
-
-\- \*\*Controle de Concorrência:\*\* Previne overselling com lock otimista no banco
-
-\- \*\*Resiliência:\*\* Retry com backoff exponencial + fallback em falhas de serviço
-
-\- \*\*Idempotência:\*\* Chave de idempotência por requisição para evitar compras duplicadas
-
-\- \*\*Comunicação Assíncrona:\*\* RabbitMQ para desacoplar pagamento e notificação
-
-
-
-\## 🚀 Como Rodar
-
-
-
-\### Pré-requisitos
-
-\- Docker
-
-\- Docker Compose
-
-
-
-\### Executar
+**Pré-requisitos:** Docker e Docker Compose instalados.
 
 ```bash
-
 git clone https://github.com/yorrangodoy/ticket-system-distributed.git
-
 cd ticket-system-distributed
-
+cp .env.example .env
 docker-compose up --build
-
 ```
 
+| Recurso | URL |
+|---------|-----|
+| API (via Kong) | http://localhost:8000 |
+| Kong Admin | http://localhost:8001 |
+| RabbitMQ Dashboard | http://localhost:15672 |
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3001 |
 
+---
 
-\## 📊 Observabilidade
+## Estrutura do Repositório
 
+ticket-system-distributed/
+├── services/
+│   ├── auth-service/
+│   ├── event-service/
+│   ├── order-service/
+│   ├── payment-service/
+│   └── notification-service/
+├── infra/
+│   ├── nginx/nginx.conf
+│   └── prometheus/prometheus.yml
+├── docs/
+├── docker-compose.yml
+├── .env.example
+└── README.md
 
+---
 
-\- \*\*Logs:\*\* Estruturados em JSON via Winston
+## Equipe
 
-\- \*\*Métricas:\*\* Prometheus coletando latência, erros e throughput
-
-\- \*\*Dashboard:\*\* Grafana para visualização
-
-
-
-\## 👥 Equipe
-
-
-
-| Nome | Responsabilidade |
-
-|------|-----------------|
-
-| Yorran | Infraestrutura, Docker, API Gateway, Load Balancer, Observabilidade |
-
+| Nome | Escopo |
+|------|--------|
+| Yorran | Infraestrutura, orquestração, API Gateway, Load Balancer, observabilidade |
 | Levi | auth-service, event-service |
-
 | Leo | order-service, payment-service, notification-service |
 
+---
 
+## Entregas
 
-\## 📅 Entregas
-
-
-
-\- \*\*Entrega dos materiais:\*\* 08/06/2026
-
-\- \*\*Apresentação:\*\* 15/06/2026
-
+| Item | Data |
+|------|------|
+| Relatório + Repositório + Apresentação | 08/06/2026 |
+| Apresentação presencial | 15/06/2026 |
