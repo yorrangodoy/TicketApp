@@ -144,9 +144,10 @@ services:
 
   auth-service:
     build:
-      context: ./services/auth-service
-      dockerfile: Dockerfile
+      context: ./services
+      dockerfile: auth-service/Dockerfile
     environment:
+      SERVICE_NAME: auth-service
       DATABASE_URL: postgresql://${DB_USER:-ticketuser}:${DB_PASSWORD:-ticketpass}@postgres:5432/${DB_NAME:-ticketdb}
       JWT_SECRET: ${JWT_SECRET:-supersecretkey}
       PORT: 3000
@@ -159,11 +160,12 @@ services:
 
   event-service:
     build:
-      context: ./services/event-service
-      dockerfile: Dockerfile
+      context: ./services
+      dockerfile: event-service/Dockerfile
     deploy:
       replicas: 2
     environment:
+      SERVICE_NAME: event-service
       DATABASE_URL: postgresql://${DB_USER:-ticketuser}:${DB_PASSWORD:-ticketpass}@postgres:5432/${DB_NAME:-ticketdb}
       PORT: 3000
     depends_on:
@@ -175,11 +177,12 @@ services:
 
   order-service:
     build:
-      context: ./services/order-service
-      dockerfile: Dockerfile
+      context: ./services
+      dockerfile: order-service/Dockerfile
     deploy:
       replicas: 2
     environment:
+      SERVICE_NAME: order-service
       DATABASE_URL: postgresql://${DB_USER:-ticketuser}:${DB_PASSWORD:-ticketpass}@postgres:5432/${DB_NAME:-ticketdb}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
       PAYMENT_SERVICE_URL: http://payment-service:3000
@@ -195,9 +198,10 @@ services:
 
   payment-service:
     build:
-      context: ./services/payment-service
-      dockerfile: Dockerfile
+      context: ./services
+      dockerfile: payment-service/Dockerfile
     environment:
+      SERVICE_NAME: payment-service
       PORT: 3000
     networks:
       - ticket-network
@@ -205,9 +209,10 @@ services:
 
   notification-service:
     build:
-      context: ./services/notification-service
-      dockerfile: Dockerfile
+      context: ./services
+      dockerfile: notification-service/Dockerfile
     environment:
+      SERVICE_NAME: notification-service
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
       PORT: 3000
     depends_on:

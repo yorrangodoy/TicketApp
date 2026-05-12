@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\User\\\\ticket-system-distributed\\\\infra\" -Recurse -File | Select-Object FullName, @{N='RelativePath';E={$_.FullName -replace [regex]::Escape\\(\"C:\\\\Users\\\\User\\\\ticket-system-distributed\\\\infra\\\\\"\\), ''}})"
+    ]
+  }
+}
