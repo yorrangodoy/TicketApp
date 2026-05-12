@@ -1,0 +1,44 @@
+# Provisionamento automático de fontes de dados do Grafana.
+# Este arquivo é lido na inicialização do container e cria/atualiza os datasources
+# sem necessidade de configuração manual pela UI.
+# Documentação: https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources
+
+apiVersion: 1
+
+# Lista de datasources provisionados. O Grafana reconcilia ao iniciar —
+# datasources com o mesmo name/uid são atualizados, não duplicados.
+datasources:
+  - # Nome exibido na UI e referenciado nos dashboards provisionados
+    name: Prometheus
+
+    # Tipo do plugin. "prometheus" é nativo no Grafana e não precisa ser instalado.
+    type: prometheus
+
+    # UID fixo para que os dashboards possam referenciar este datasource de forma
+    # estável, independentemente do ID interno gerado pelo banco do Grafana.
+    uid: prometheus
+
+    # access: proxy → o servidor do Grafana faz as chamadas ao Prometheus.
+    # Alternativa seria "direct" (browser), mas proxy é o correto em ambientes Docker
+    # onde o Prometheus não está exposto diretamente ao navegador do usuário.
+    access: proxy
+
+    # URL interna do Prometheus dentro da rede Docker (ticket-network).
+    # Porta 9090 é a padrão do Prometheus.
+    url: http://prometheus:9090
+
+    # Define como fonte de dados padrão — painéis que não especificam datasource
+    # usam este automaticamente.
+    isDefault: true
+
+    # Permite que o datasource seja editado pela UI. false deixaria somente leitura.
+    editable: true
+
+    jsonData:
+      # httpMethod: POST é mais eficiente para queries longas com muitos parâmetros.
+      # GET tem limite de tamanho de URL; POST não tem essa restrição.
+      httpMethod: POST
+
+      # Intervalo de scrape do Prometheus, usado para calcular step automático
+      # em range queries. Deve coincidir com scrape_interval no prometheus.yml (15s).
+      timeInterval: "15s"
