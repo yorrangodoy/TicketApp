@@ -1,0 +1,61 @@
+{
+  "_comment": "Definições pré-carregadas do RabbitMQ para o sistema de venda de ingressos. Este arquivo é carregado automaticamente na inicialização via RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS. Pode ser reaplicado quantas vezes for necessário — o RabbitMQ mescla as definições sem duplicar recursos.",
+
+  "_comment_vhosts": "Virtual host padrão. Todos os exchanges, filas e bindings da aplicação vivem sob o vhost '/'.",
+  "vhosts": [
+    { "name": "/" }
+  ],
+
+  "_comment_exchanges": "ticket.exchange — exchange central do tipo topic. O tipo topic permite roteamento flexível por padrão de routing key usando '.' como separador e '*' / '#' como curingas. Exemplo: 'order.*' casa com 'order.created' e 'order.cancelled'.",
+  "exchanges": [
+    {
+      "name": "ticket.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+
+  "_comment_queues": "Duas filas duráveis: payment.queue recebe eventos de criação de pedido para processar o pagamento; notification.queue recebe eventos de pagamento confirmado para disparar o e-mail de confirmação ao comprador. 'durable: true' garante que as filas sobrevivem a reinicializações do broker.",
+  "queues": [
+    {
+      "name": "payment.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "notification.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+
+  "_comment_bindings": "Bindings definem para qual fila cada routing key é entregue. 'order.created' → payment.queue: o order-service publica com essa chave quando um pedido é criado; o payment-service consome e processa o pagamento. 'payment.confirmed' → notification.queue: o payment-service publica com essa chave após confirmar o pagamento; o notification-service consome e envia o e-mail.",
+  "bindings": [
+    {
+      "_comment": "Pedido criado dispara processamento de pagamento",
+      "source": "ticket.exchange",
+      "vhost": "/",
+      "destination": "payment.queue",
+      "destination_type": "queue",
+      "routing_key": "order.created",
+      "arguments": {}
+    },
+    {
+      "_comment": "Pagamento confirmado dispara envio de e-mail de confirmação",
+      "source": "ticket.exchange",
+      "vhost": "/",
+      "destination": "notification.queue",
+      "destination_type": "queue",
+      "routing_key": "payment.confirmed",
+      "arguments": {}
+    }
+  ]
+}
