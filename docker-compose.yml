@@ -56,6 +56,19 @@ services:
       - ticket-network
     restart: unless-stopped
 
+  kong-setup:
+    image: curlimages/curl:latest
+    container_name: kong-setup
+    depends_on:
+      kong:
+        condition: service_started
+    volumes:
+      - ./infra/kong/kong-setup.sh:/kong-setup.sh:ro
+    command: ["sh", "/kong-setup.sh"]
+    networks:
+      - ticket-network
+    restart: "no"
+
   # Load Balancer
   nginx:
     image: nginx:alpine
