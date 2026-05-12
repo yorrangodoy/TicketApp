@@ -1,0 +1,39 @@
+# Provisionamento automático de dashboards do Grafana.
+# O Grafana lê este arquivo na inicialização e monitora o diretório configurado,
+# importando qualquer arquivo .json encontrado como dashboard.
+# Documentação: https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards
+
+apiVersion: 1
+
+# Lista de providers — cada provider aponta para uma pasta com arquivos .json de dashboards.
+providers:
+  - # Nome do provider, exibido nos logs do Grafana para rastreabilidade.
+    name: "ticket-system"
+
+    # ID da organização padrão no Grafana (sempre 1 em instalações simples).
+    orgId: 1
+
+    # Pasta onde os dashboards aparecerão na UI do Grafana.
+    # String vazia coloca na pasta "General" (raiz).
+    folder: "Ticket System"
+
+    # Tipo do provider. "file" lê dashboards de arquivos .json no disco.
+    type: file
+
+    # false → impede que dashboards provisionados sejam deletados pela UI.
+    # Garante que o estado do arquivo no disco é sempre a fonte da verdade.
+    disableDeletion: false
+
+    # Intervalo em segundos para verificar se algum .json foi alterado no disco.
+    # Útil durante desenvolvimento: edite o .json e o dashboard atualiza em até 10s.
+    updateIntervalSeconds: 10
+
+    # allowUiUpdates: false → edições feitas na UI são descartadas no próximo reload.
+    # true permitiria editar pela UI, mas as mudanças não seriam persistidas no arquivo.
+    allowUiUpdates: false
+
+    options:
+      # Caminho dentro do container onde os arquivos .json de dashboard estão montados.
+      # Corresponde ao volume ./infra/grafana/dashboards → /var/lib/grafana/dashboards
+      # definido no docker-compose.yml.
+      path: /var/lib/grafana/dashboards
