@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from '../db';
 import logger from '../../../shared/logger';
+import { authMiddleware } from '../../../shared/middleware/auth';
 
 const router = Router();
 
@@ -68,6 +69,25 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     res.json({ token });
   } catch (err: any) {
     logger.error('Erro ao realizar login', { error: err.message });
+    res.status(500).json({ error: 'Erro interno' });
+  }
+});
+
+router.get('/me', authMiddleware, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await pool.query(
+      'SELECT id, email, created_at FROM users WHERE id = $1',
+      [req.user!.id]
+    );
+
+    if (!result.rows[0]) {
+      res.status(404).json({ error: 'Usuário não encontrado' });
+      return;
+    }
+
+    res.json({ user: result.rows[0] });
+  } catch (err: any) {
+    logger.error('Erro ao buscar usuário', { error: err.message });
     res.status(500).json({ error: 'Erro interno' });
   }
 });
