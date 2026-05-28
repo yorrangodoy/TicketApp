@@ -164,6 +164,8 @@ services:
     build:
       context: ./services
       dockerfile: auth-service/Dockerfile
+    ports:
+    - "3001:3000"
     environment:
       SERVICE_NAME: auth-service
       DATABASE_URL: postgresql://${DB_USER:-ticketuser}:${DB_PASSWORD:-ticketpass}@postgres:5432/${DB_NAME:-ticketdb}
