@@ -1,6 +1,7 @@
 import express from 'express';
-import logger from '../shared/logger';
-import { register, metricsMiddleware } from '../shared/metrics';
+import logger from '../../shared/logger';
+import { register, metricsMiddleware } from '../../shared/metrics';
+import { initializeDatabase } from './db';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,8 +19,16 @@ app.get('/metrics', async (_req, res) => {
   res.end(await register.metrics());
 });
 
-app.listen(PORT, () => {
-  logger.info(`${SERVICE_NAME} rodando na porta ${PORT}`);
+async function start(): Promise<void> {
+  await initializeDatabase();
+  app.listen(PORT, () => {
+    logger.info(`${SERVICE_NAME} rodando na porta ${PORT}`);
+  });
+}
+
+start().catch((err) => {
+  logger.error('Falha ao inicializar o serviço', { error: err.message });
+  process.exit(1);
 });
 
 export default app;
