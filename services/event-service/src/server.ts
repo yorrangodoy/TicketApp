@@ -2,6 +2,7 @@ import express from 'express';
 import logger from '../../shared/logger';
 import { register, metricsMiddleware } from '../../shared/metrics';
 import { initializeDatabase } from './db';
+import eventRoutes from './routes/events';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,6 +10,7 @@ const SERVICE_NAME = process.env.SERVICE_NAME || 'event-service';
 
 app.use(express.json());
 app.use(metricsMiddleware);
+app.use('/events', eventRoutes);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: SERVICE_NAME });

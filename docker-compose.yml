@@ -180,6 +180,8 @@ services:
     build:
       context: ./services
       dockerfile: event-service/Dockerfile
+    ports:
+    - "3002:3000"
     deploy:
       replicas: 2
     environment:
