@@ -1,6 +1,8 @@
 import express from 'express';
-import logger from '../shared/logger';
-import { register, metricsMiddleware } from '../shared/metrics';
+import logger from '../../shared/logger';
+import { register, metricsMiddleware } from '../../shared/metrics';
+import { initializeDatabase } from './db';
+import orderRoutes from './routes/order.routes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -8,6 +10,7 @@ const SERVICE_NAME = process.env.SERVICE_NAME || 'order-service';
 
 app.use(express.json());
 app.use(metricsMiddleware);
+app.use('/orders', orderRoutes);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: SERVICE_NAME });
@@ -18,8 +21,16 @@ app.get('/metrics', async (_req, res) => {
   res.end(await register.metrics());
 });
 
-app.listen(PORT, () => {
-  logger.info(`${SERVICE_NAME} rodando na porta ${PORT}`);
+async function start(): Promise<void> {
+  await initializeDatabase();
+  app.listen(PORT, () => {
+    logger.info(`${SERVICE_NAME} rodando na porta ${PORT}`);
+  });
+}
+
+start().catch((err) => {
+  logger.error('Falha ao inicializar o serviço', { error: (err as Error).message });
+  process.exit(1);
 });
 
 export default app;
