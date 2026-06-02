@@ -162,6 +162,8 @@ services:
       DATABASE_URL: postgresql://${DB_USER:-ticketuser}:${DB_PASSWORD:-ticketpass}@postgres:5432/${DB_NAME:-ticketdb}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
       PAYMENT_SERVICE_URL: http://payment-service:3000
+      EVENT_SERVICE_URL: http://ticket-system-distributed-event-service-1:3000
+      JWT_SECRET: ${JWT_SECRET:-supersecretkey}
       PORT: 3000
     depends_on:
       postgres:
