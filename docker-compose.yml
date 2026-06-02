@@ -3,71 +3,28 @@ version: '3.8'
 services:
   # ==================== INFRA ====================
 
-  # API Gateway
-  kong-database:
-    image: postgres:15-alpine
-    container_name: kong-database
-    environment:
-      POSTGRES_USER: kong
-      POSTGRES_PASSWORD: kong
-      POSTGRES_DB: kong
-    volumes:
-      - kong-db-data:/var/lib/postgresql/data
-    networks:
-      - ticket-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kong"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
-  kong-migration:
-    image: kong:3.6
-    container_name: kong-migration
-    depends_on:
-      kong-database:
-        condition: service_healthy
-    environment:
-      KONG_DATABASE: postgres
-      KONG_PG_HOST: kong-database
-      KONG_PG_USER: kong
-      KONG_PG_PASSWORD: kong
-    command: kong migrations bootstrap
-    networks:
-      - ticket-network
-
+  # API Gateway (modo DB-less — configuração declarativa via kong.yml)
   kong:
     image: kong:3.6
     container_name: kong
-    depends_on:
-      kong-migration:
-        condition: service_completed_successfully
     environment:
-      KONG_DATABASE: postgres
-      KONG_PG_HOST: kong-database
-      KONG_PG_USER: kong
-      KONG_PG_PASSWORD: kong
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
       KONG_PROXY_LISTEN: 0.0.0.0:8000
       KONG_ADMIN_LISTEN: 0.0.0.0:8001
     ports:
       - "8000:8000"
       - "8001:8001"
-    networks:
-      - ticket-network
-    restart: unless-stopped
-
-  kong-setup:
-    image: curlimages/curl:latest
-    container_name: kong-setup
-    depends_on:
-      kong:
-        condition: service_started
     volumes:
-      - ./infra/kong/kong-setup.sh:/kong-setup.sh:ro
-    command: ["sh", "/kong-setup.sh"]
+      - ./infra/kong/kong.yml:/etc/kong/kong.yml:ro
     networks:
       - ticket-network
-    restart: "no"
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   # Load Balancer
   nginx:
@@ -116,9 +73,9 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
-      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: '-rabbitmq_management load_definitions "/etc/rabbitmq/definitions.json"'
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+      - ./infra/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
       - ./infra/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
     networks:
       - ticket-network
@@ -250,4 +207,3 @@ networks:
 volumes:
   postgres-data:
   rabbitmq-data:
-  kong-db-data:

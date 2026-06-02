@@ -1,5 +1,25 @@
 {
-  "_comment": "Definições pré-carregadas do RabbitMQ para o sistema de venda de ingressos. Este arquivo é carregado automaticamente na inicialização via RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS. Pode ser reaplicado quantas vezes for necessário — o RabbitMQ mescla as definições sem duplicar recursos.",
+  "_comment": "Definições pré-carregadas do RabbitMQ para o sistema de venda de ingressos. Este arquivo é carregado automaticamente na inicialização via rabbitmq.conf. Pode ser reaplicado quantas vezes for necessário — o RabbitMQ mescla as definições sem duplicar recursos.",
+
+  "_comment_users": "Usuário guest com senha em texto plano (aceito pelo load_definitions). O RabbitMQ faz o hash internamente ao importar. Sem esta seção o load_definitions sobrescreve a base de usuários e o guest deixa de existir, causando erro PLAIN login refused.",
+  "users": [
+    {
+      "name": "guest",
+      "password": "guest",
+      "tags": ["administrator"]
+    }
+  ],
+
+  "_comment_permissions": "Permissões totais do usuário guest no vhost padrão '/'.",
+  "permissions": [
+    {
+      "user": "guest",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
 
   "_comment_vhosts": "Virtual host padrão. Todos os exchanges, filas e bindings da aplicação vivem sob o vhost '/'.",
   "vhosts": [

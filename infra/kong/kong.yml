@@ -1,0 +1,48 @@
+_format_version: "3.0"
+
+# Configuração declarativa (DB-less) do Kong Gateway.
+# Este arquivo substitui o banco Postgres + script de setup dinâmico.
+# O Kong carrega estas definições na inicialização e as mantém em memória —
+# sem estado externo, sem race condition de script curl.
+#
+# Topologia: Kong recebe as requisições externas e repassa para o Nginx (porta 80),
+# que age como load balancer interno distribuindo entre as réplicas de cada serviço.
+# strip_path: false preserva o prefixo /api/* para que o Nginx roteie corretamente.
+
+services:
+
+  # Serviço de autenticação — emite e valida tokens JWT
+  - name: auth-service
+    url: http://nginx:80/api/auth
+    routes:
+      - name: auth-route
+        paths:
+          - /api/auth
+        strip_path: false
+
+  # Serviço de eventos — CRUD de eventos e controle de estoque de ingressos
+  - name: event-service
+    url: http://nginx:80/api/events
+    routes:
+      - name: event-route
+        paths:
+          - /api/events
+        strip_path: false
+
+  # Serviço de pedidos — criação de pedidos com idempotência e saga de compensação
+  - name: order-service
+    url: http://nginx:80/api/orders
+    routes:
+      - name: order-route
+        paths:
+          - /api/orders
+        strip_path: false
+
+  # Serviço de pagamentos — mock de gateway de pagamento
+  - name: payment-service
+    url: http://nginx:80/api/payments
+    routes:
+      - name: payment-route
+        paths:
+          - /api/payments
+        strip_path: false
