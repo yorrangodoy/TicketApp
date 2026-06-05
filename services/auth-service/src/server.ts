@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import logger from '../../shared/logger';
 import { register, metricsMiddleware } from '../../shared/metrics';
 import { initializeDatabase } from './db';
@@ -8,6 +9,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const SERVICE_NAME = process.env.SERVICE_NAME || 'auth-service';
 
+app.use(cors({ origin: '*', credentials: true }));
 app.use(express.json());
 app.use(metricsMiddleware);
 app.use('/auth', authRoutes);

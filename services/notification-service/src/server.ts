@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import logger from '../../shared/logger';
 import { register, metricsMiddleware } from '../../shared/metrics';
 import { startConsumer } from './consumer';
@@ -7,6 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const SERVICE_NAME = process.env.SERVICE_NAME || 'notification-service';
 
+app.use(cors({ origin: '*', credentials: true }));
 app.use(express.json());
 app.use(metricsMiddleware);
 
