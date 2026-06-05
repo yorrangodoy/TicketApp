@@ -48,7 +48,7 @@ export async function login(
   email: string,
   password: string
 ): Promise<LoginResponse> {
-  const res = await fetch(`${baseURL}/api/auth/login`, {
+  const res = await fetch(`${baseURL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -68,7 +68,7 @@ export async function register(
   email: string,
   password: string
 ): Promise<RegisterResponse> {
-  const res = await fetch(`${baseURL}/api/auth/register`, {
+  const res = await fetch(`${baseURL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, email, password }),
@@ -86,7 +86,7 @@ export async function register(
 export async function getEvents(): Promise<Evento[]> {
   const token = getToken();
 
-  const res = await fetch(`${baseURL}/api/events`, {
+  const res = await fetch(`${baseURL}/events`, {
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
@@ -122,7 +122,7 @@ export async function buyTicket(
   console.log("[buyTicket] headers:", headers);
   console.log("[buyTicket] body:", body);
 
-  const res = await fetch(`${baseURL}/api/orders`, {
+  const res = await fetch(`${baseURL}/orders`, {
     method: "POST",
     headers,
     body: JSON.stringify(body),
