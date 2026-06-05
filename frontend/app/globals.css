@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+/* Variáveis do tema escuro */
+:root {
+  --bg-base: #0f0f0f;
+  --bg-card: #1a1a2e;
+  --bg-input: #16213e;
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-light: #a78bfa;
+  --text-primary: #f1f5f9;
+  --text-muted: #94a3b8;
+  --border: #2d2d4e;
+  --error: #f87171;
+  --success: #34d399;
+}
+
+@theme inline {
+  --color-bg-base: var(--bg-base);
+  --color-bg-card: var(--bg-card);
+  --color-bg-input: var(--bg-input);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-light: var(--accent-light);
+  --color-text-primary: var(--text-primary);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border);
+  --color-error: var(--error);
+  --color-success: var(--success);
+  --font-sans: var(--font-geist-sans);
+}
+
+html,
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100%;
+}
