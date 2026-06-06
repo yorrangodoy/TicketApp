@@ -4,6 +4,7 @@ import logger from '../../shared/logger';
 import { register, metricsMiddleware } from '../../shared/metrics';
 import { initializeDatabase } from './db';
 import authRoutes from './routes/auth';
+import adminRoutes from './routes/admin';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,6 +14,7 @@ app.use(cors({ origin: '*', credentials: true }));
 app.use(express.json());
 app.use(metricsMiddleware);
 app.use('/auth', authRoutes);
+app.use('/admin', adminRoutes);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: SERVICE_NAME });
