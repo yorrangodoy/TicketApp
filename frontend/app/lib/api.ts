@@ -1,7 +1,8 @@
 /* Módulo de acesso à API REST do backend */
 
-const baseURL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:80";
+const AUTH_URL  = process.env.NEXT_PUBLIC_AUTH_URL  ?? "http://localhost:3000";
+const EVENT_URL = process.env.NEXT_PUBLIC_EVENT_URL ?? "http://localhost:3001";
+const ORDER_URL = process.env.NEXT_PUBLIC_ORDER_URL ?? "http://localhost:3002";
 
 /* Lê o token JWT salvo no localStorage */
 export function getToken(): string | null {
@@ -48,7 +49,7 @@ export async function login(
   email: string,
   password: string
 ): Promise<LoginResponse> {
-  const res = await fetch(`${baseURL}/auth/login`, {
+  const res = await fetch(`${AUTH_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -68,7 +69,7 @@ export async function register(
   email: string,
   password: string
 ): Promise<RegisterResponse> {
-  const res = await fetch(`${baseURL}/auth/register`, {
+  const res = await fetch(`${AUTH_URL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, email, password }),
@@ -86,7 +87,7 @@ export async function register(
 export async function getEvents(): Promise<Evento[]> {
   const token = getToken();
 
-  const res = await fetch(`${baseURL}/events`, {
+  const res = await fetch(`${EVENT_URL}/events`, {
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
@@ -122,7 +123,7 @@ export async function buyTicket(
   console.log("[buyTicket] headers:", headers);
   console.log("[buyTicket] body:", body);
 
-  const res = await fetch(`${baseURL}/orders`, {
+  const res = await fetch(`${ORDER_URL}/orders`, {
     method: "POST",
     headers,
     body: JSON.stringify(body),
