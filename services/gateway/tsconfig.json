@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "rootDir": "..",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*", "../shared/**/*", "../order-service/src/**/*", "../payment-service/src/**/*", "../notification-service/src/**/*"],
+  "exclude": [
+    "../order-service/src/server.ts",
+    "../payment-service/src/server.ts",
+    "../notification-service/src/server.ts"
+  ]
+}
