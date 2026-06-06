@@ -8,10 +8,18 @@ import { authMiddleware } from '../../../shared/middleware/auth';
 const router = Router();
 
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
-  const { email, password } = req.body;
+  const { email, password, role } = req.body;
 
   if (!email || !password) {
     res.status(400).json({ error: 'email e password são obrigatórios' });
+    return;
+  }
+
+  const allowedRoles = ['user', 'admin'];
+  const userRole: string = role ?? 'user';
+
+  if (!allowedRoles.includes(userRole)) {
+    res.status(400).json({ error: 'role inválido. Valores permitidos: user, admin' });
     return;
   }
 
@@ -19,11 +27,11 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     const password_hash = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email, created_at',
-      [email, password_hash]
+      'INSERT INTO users (email, password_hash, role) VALUES ($1, $2, $3) RETURNING id, email, role, created_at',
+      [email, password_hash, userRole]
     );
 
-    logger.info('Usuário registrado', { userId: result.rows[0].id, email });
+    logger.info('Usuário registrado', { userId: result.rows[0].id, email, role: userRole });
 
     res.status(201).json({ user: result.rows[0] });
   } catch (err: any) {
@@ -47,7 +55,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
 
   try {
     const result = await pool.query(
-      'SELECT id, email, password_hash FROM users WHERE email = $1',
+      'SELECT id, email, password_hash, role FROM users WHERE email = $1',
       [email]
     );
 
@@ -59,7 +67,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET as string,
       { expiresIn: '8h' }
     );
@@ -76,7 +84,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
 router.get('/me', authMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await pool.query(
-      'SELECT id, email, created_at FROM users WHERE id = $1',
+      'SELECT id, email, role, created_at FROM users WHERE id = $1',
       [req.user!.id]
     );
 

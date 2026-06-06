@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import pool from '../db';
 import logger from '../../../shared/logger';
-import { authMiddleware } from '../../../shared/middleware/auth';
+import { authMiddleware, adminMiddleware } from '../../../shared/middleware/auth';
 
 const router = Router();
 
@@ -44,7 +44,7 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-router.post('/', authMiddleware, async (req: Request, res: Response): Promise<void> => {
+router.post('/', authMiddleware, adminMiddleware, async (req: Request, res: Response): Promise<void> => {
   const { title, description, date, venue, total_tickets, price } = req.body;
 
   if (!title || !date || !venue || total_tickets == null || price == null) {
@@ -69,7 +69,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response): Promise<vo
   }
 });
 
-router.put('/:id', authMiddleware, async (req: Request, res: Response): Promise<void> => {
+router.put('/:id', authMiddleware, adminMiddleware, async (req: Request, res: Response): Promise<void> => {
   const id = parseInt(req.params.id, 10);
 
   if (isNaN(id)) {
@@ -107,7 +107,7 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response): Promise<
   }
 });
 
-router.delete('/:id', authMiddleware, async (req: Request, res: Response): Promise<void> => {
+router.delete('/:id', authMiddleware, adminMiddleware, async (req: Request, res: Response): Promise<void> => {
   const id = parseInt(req.params.id, 10);
 
   if (isNaN(id)) {
