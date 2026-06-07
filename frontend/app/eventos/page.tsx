@@ -1,9 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getEvents, getToken, removeToken, type Evento } from "../lib/api";
+import {
+  getEvents,
+  getToken,
+  removeToken,
+  getRoleFromToken,
+  createEvent,
+  deleteEvent,
+  type Evento,
+} from "../lib/api";
 
 /* Formata preço em reais */
 function formatarPreco(valor: number): string {
@@ -29,6 +37,20 @@ export default function EventosPage() {
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+
+  const isAdmin = getRoleFromToken() === "admin";
+  const [showModal, setShowModal] = useState(false);
+  const [deleting, setDeleting] = useState<number | null>(null);
+  const [criando, setCriando] = useState(false);
+  const [formErro, setFormErro] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    date: "",
+    venue: "",
+    total_tickets: 100,
+    price: 0,
+  });
 
   useEffect(() => {
     /* Redireciona para login se não houver token */
@@ -57,6 +79,40 @@ export default function EventosPage() {
     router.replace("/");
   }
 
+  async function handleCriarEvento(e: FormEvent) {
+    e.preventDefault();
+    setFormErro(null);
+    setCriando(true);
+    try {
+      await createEvent({
+        ...form,
+        total_tickets: Number(form.total_tickets),
+        price: Number(form.price),
+      });
+      setShowModal(false);
+      setForm({ title: "", description: "", date: "", venue: "", total_tickets: 100, price: 0 });
+      const lista = await getEvents();
+      setEventos(lista);
+    } catch (err: unknown) {
+      setFormErro(err instanceof Error ? err.message : "Erro ao criar evento");
+    } finally {
+      setCriando(false);
+    }
+  }
+
+  async function handleDeletar(id: number) {
+    if (!confirm("Deletar este evento?")) return;
+    setDeleting(id);
+    try {
+      await deleteEvent(id);
+      setEventos((prev) => prev.filter((e) => e.id !== id));
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Erro ao deletar");
+    } finally {
+      setDeleting(null);
+    }
+  }
+
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--bg-base)" }}>
       {/* Header */}
@@ -67,9 +123,19 @@ export default function EventosPage() {
           borderBottom: "1px solid var(--border)",
         }}
       >
-        <span className="text-xl font-bold tracking-tight" style={{ color: "var(--accent-light)" }}>
-          🎟 TicketApp
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-xl font-bold tracking-tight" style={{ color: "var(--accent-light)" }}>
+            🎟 TicketApp
+          </span>
+          {isAdmin && (
+            <span
+              className="rounded-full px-3 py-1 text-xs font-bold"
+              style={{ backgroundColor: "var(--accent)", color: "#fff" }}
+            >
+              Admin
+            </span>
+          )}
+        </div>
         <button
           onClick={handleLogout}
           className="rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200"
@@ -98,6 +164,16 @@ export default function EventosPage() {
         <p className="mb-8 text-sm" style={{ color: "var(--text-muted)" }}>
           Escolha um evento e garanta seu ingresso
         </p>
+
+        {isAdmin && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="mb-6 rounded-lg px-5 py-2 text-sm font-semibold transition-all duration-200"
+            style={{ backgroundColor: "var(--accent)", color: "#fff" }}
+          >
+            + Criar Evento
+          </button>
+        )}
 
         {/* Estado: carregando */}
         {loading && (
@@ -167,25 +243,126 @@ export default function EventosPage() {
                     </p>
                   </div>
 
-                  <Link
-                    href={`/eventos/${evento.id}/comprar`}
-                    className="rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200"
-                    style={{
-                      backgroundColor:
-                        evento.available_tickets > 0 ? "var(--accent)" : "var(--border)",
-                      color:
-                        evento.available_tickets > 0 ? "#fff" : "var(--text-muted)",
-                      pointerEvents: evento.available_tickets > 0 ? "auto" : "none",
-                    }}
-                  >
-                    {evento.available_tickets > 0 ? "Comprar" : "Esgotado"}
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    {isAdmin && (
+                      <button
+                        onClick={() => handleDeletar(Number(evento.id))}
+                        disabled={deleting === Number(evento.id)}
+                        className="rounded-lg px-3 py-2 text-xs font-semibold transition-all duration-200 disabled:opacity-50"
+                        style={{
+                          backgroundColor: "rgba(248,113,113,0.15)",
+                          color: "var(--error)",
+                          border: "1px solid rgba(248,113,113,0.3)",
+                        }}
+                      >
+                        {deleting === Number(evento.id) ? "Deletando…" : "Deletar"}
+                      </button>
+                    )}
+
+                    <Link
+                      href={`/eventos/${evento.id}/comprar`}
+                      className="rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200"
+                      style={{
+                        backgroundColor:
+                          evento.available_tickets > 0 ? "var(--accent)" : "var(--border)",
+                        color:
+                          evento.available_tickets > 0 ? "#fff" : "var(--text-muted)",
+                        pointerEvents: evento.available_tickets > 0 ? "auto" : "none",
+                      }}
+                    >
+                      {evento.available_tickets > 0 ? "Comprar" : "Esgotado"}
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
       </main>
+
+      {/* Modal: criar evento */}
+      {showModal && isAdmin && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl p-8 shadow-2xl"
+            style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-bold mb-6" style={{ color: "var(--text-primary)" }}>
+              Criar Evento
+            </h2>
+            <form onSubmit={handleCriarEvento} className="space-y-4">
+              {[
+                { label: "Título", key: "title", type: "text", required: true },
+                { label: "Descrição", key: "description", type: "text", required: false },
+                { label: "Local (venue)", key: "venue", type: "text", required: true },
+                { label: "Data e Hora", key: "date", type: "datetime-local", required: true },
+                { label: "Total de Ingressos", key: "total_tickets", type: "number", required: true },
+                { label: "Preço (R$)", key: "price", type: "number", required: true },
+              ].map(({ label, key, type, required }) => (
+                <div key={key}>
+                  <label
+                    className="block text-sm font-medium mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    {label}
+                  </label>
+                  <input
+                    type={type}
+                    required={required}
+                    value={String(form[key as keyof typeof form])}
+                    onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
+                    className="w-full rounded-lg px-4 py-3 text-sm outline-none"
+                    style={{
+                      backgroundColor: "var(--bg-input)",
+                      color: "var(--text-primary)",
+                      border: "1px solid var(--border)",
+                    }}
+                  />
+                </div>
+              ))}
+              {formErro && (
+                <p
+                  className="text-sm rounded-lg px-4 py-3"
+                  style={{
+                    backgroundColor: "rgba(248,113,113,0.1)",
+                    color: "var(--error)",
+                    border: "1px solid rgba(248,113,113,0.3)",
+                  }}
+                >
+                  {formErro}
+                </p>
+              )}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 rounded-lg py-3 text-sm font-semibold"
+                  style={{
+                    backgroundColor: "var(--bg-input)",
+                    color: "var(--text-muted)",
+                    border: "1px solid var(--border)",
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={criando}
+                  className="flex-1 rounded-lg py-3 text-sm font-semibold disabled:opacity-60"
+                  style={{ backgroundColor: "var(--accent)", color: "#fff" }}
+                >
+                  {criando ? "Criando…" : "Criar Evento"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
