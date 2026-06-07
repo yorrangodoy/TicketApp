@@ -1,4 +1,4 @@
-# Ticket System Distributed
+# TicketApp
 
 Sistema distribuído de venda de ingressos online desenvolvido como projeto acadêmico na disciplina de **Sistemas Distribuídos e Mobile — UNISUL**.
 
@@ -10,7 +10,7 @@ O sistema simula um cenário real de e-commerce de ingressos, aplicando padrões
 
 | Recurso | URL |
 |---------|-----|
-| Frontend | https://ticket-system-distributed.vercel.app |
+| Frontend | https://ticketappa3.vercel.app |
 | Auth Service | https://auth-service-production-9dbc.up.railway.app |
 | Event Service | https://ticket-system-distributed-production.up.railway.app |
 | Gateway (Order + Payment + Notification) | https://gateway-production-da34.up.railway.app |
@@ -133,8 +133,8 @@ auth-service                    gateway
 **Pré-requisitos:** Docker e Docker Compose instalados.
 
 ```bash
-git clone https://github.com/yorrangodoy/ticket-system-distributed.git
-cd ticket-system-distributed
+git clone https://github.com/yorrangodoy/TicketApp.git
+cd TicketApp
 cp .env.example .env
 docker-compose up --build
 ```
@@ -152,7 +152,7 @@ docker-compose up --build
 ## Estrutura do Repositório
 
 ```
-ticket-system-distributed/
+TicketApp/
 ├── services/
 │   ├── auth-service/          # Autenticação JWT + perfis user/admin
 │   ├── event-service/         # Gestão de eventos e estoque
@@ -180,11 +180,11 @@ ticket-system-distributed/
 
 ## Equipe
 
-| Nome | Escopo |
-|------|--------|
-| Yorran | Infraestrutura, deploy, gateway, integração frontend-backend, CI/CD |
-| Levi | auth-service, event-service |
-| Leo | order-service, payment-service, notification-service |
+| Nome | RA | Escopo |
+|------|----|--------|
+| Yorran Luzzi de Godoy | 10723112338 | Infraestrutura, deploy, gateway, frontend, CI/CD |
+| Levi Pfleger dos Santos | 1072310761 | auth-service, event-service |
+| Leonardo Augusto Welter Goulart | 10723111291 | order-service, payment-service, notification-service |
 
 ---
 
