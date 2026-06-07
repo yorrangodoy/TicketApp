@@ -1,81 +1,134 @@
 # Ticket System Distributed
 
-Sistema distribuído de venda de ingressos online desenvolvido como projeto acadêmico na disciplina de Sistemas Distribuídos e Mobile — UNISUL.
+Sistema distribuído de venda de ingressos online desenvolvido como projeto acadêmico na disciplina de **Sistemas Distribuídos e Mobile — UNISUL**.
 
-O sistema simula um cenário real de e-commerce de ingressos, aplicando padrões de arquitetura distribuída com foco em escalabilidade, resiliência, controle de concorrência e observabilidade.
+O sistema simula um cenário real de e-commerce de ingressos, aplicando padrões de arquitetura distribuída com foco em escalabilidade, resiliência, controle de concorrência e comunicação assíncrona via mensageria.
 
 ---
 
-## Arquitetura
+## Demonstração em Produção
 
-Client (Postman/Insomnia)
-│
-▼
-┌─────────┐
-│  Kong    │  API Gateway — roteamento e controle de acesso
-└────┬────┘
-▼
-┌─────────┐
-│  Nginx   │  Load Balancer — distribuição de carga
-└────┬────┘
-│
-┌────┼──────────────┐
-▼    ▼              ▼
-Auth  Event (x2)   Order (x2) ──▶ Payment (mock)
-│    │              │
-│    │              ▼
-│    │         RabbitMQ ──▶ Notification (mock)
-│    │
-▼    ▼
-PostgreSQL
-│
-┌────┼────┐
-▼         ▼
-Prometheus  Grafana
+| Recurso | URL |
+|---------|-----|
+| Frontend | https://ticket-system-distributed.vercel.app |
+| Auth Service | https://auth-service-production-9dbc.up.railway.app |
+| Event Service | https://ticket-system-distributed-production.up.railway.app |
+| Gateway (Order + Payment + Notification) | https://gateway-production-da34.up.railway.app |
 
+---
+
+## Arquitetura Local (Docker Compose)
+
+```
+Cliente (Postman / Navegador)
+        │
+        ▼ :8000
+┌─────────────┐
+│    Kong     │  API Gateway — roteamento por path (/api/auth, /api/events, /api/orders)
+└──────┬──────┘
+       │ :80
+┌──────▼──────┐
+│    Nginx    │  Load Balancer — round-robin entre réplicas
+└──────┬──────┘
+       │
+  ┌────┴──────────────────┐
+  ▼                       ▼
+auth-service         event-service (x2)
+  │                  order-service (x2) ──► payment-service
+  │                       │
+  ▼                       ▼ AMQP assíncrono
+PostgreSQL            RabbitMQ ──► notification-service
+```
+
+## Arquitetura de Produção (Railway + Vercel)
+
+```
+Cliente (Navegador / Postman)
+        │
+        ▼
+┌───────────────────┐
+│  Vercel (CDN)     │  Next.js 14 + Tailwind CSS
+└────────┬──────────┘
+    ┌────┴──────────────────────────┐
+    │                               │
+    ▼                               ▼
+auth-service                    gateway
+(Railway)                      (Railway)
+                          ┌────────────────┐
+                          │ order-service  │
+                          │ payment-service│ ──► RabbitMQ
+                          │ notification   │         │
+                          └───────┬────────┘         ▼
+                                  │         notification-service
+                                  ▼
+                            event-service
+                            (Railway)
+                                  │
+                                  ▼
+                             PostgreSQL
+                             (Railway)
+```
+
+> O gateway consolida order, payment e notification num único container por restrição de infraestrutura do plano gratuito do Railway, preservando a separação lógica de responsabilidades e a comunicação assíncrona real via RabbitMQ.
+
+---
+
+## Perfis de Usuário
+
+| Perfil | Operações |
+|--------|-----------|
+| **Administrador** | Criar eventos, alterar quantidade de ingressos, alterar preço, remover eventos, listar usuários |
+| **Usuário Final** | Cadastro, login, listar eventos, comprar ingressos (boleto, PIX, cartão) |
 
 ---
 
 ## Serviços
 
-| Serviço | Porta | Responsabilidade |
-|---------|-------|------------------|
-| auth-service | 3000 | Cadastro, login e autenticação via JWT |
-| event-service | 3000 | CRUD de eventos (perfil admin) |
-| order-service | 3000 | Compra de ingressos com controle de concorrência e idempotência |
-| payment-service | 3000 | Stub de gateway de pagamento (boleto, PIX, cartão) |
-| notification-service | 3000 | Stub de envio de e-mail via consumo de fila |
+| Serviço | Responsabilidade |
+|---------|-----------------|
+| **auth-service** | Cadastro, login, JWT com role (user/admin), rota /admin/users |
+| **event-service** | CRUD de eventos (admin), controle de estoque com SELECT FOR UPDATE |
+| **order-service** | Compra com idempotência, retry, SAGA de compensação |
+| **payment-service** | Mock de gateway (boleto, PIX, cartão) — 80% aprovação |
+| **notification-service** | Consumidor RabbitMQ, simula envio de e-mail |
+| **gateway** | Container consolidado: order + payment + notification (Railway) |
 
 ---
 
 ## Stack
 
-| Camada | Tecnologia | Justificativa |
-|--------|-----------|---------------|
-| Backend | Node.js + Express + TypeScript | Ecossistema unificado, tipagem estática, produtividade |
-| Banco de Dados | PostgreSQL 15 | ACID, suporte a lock otimista, confiabilidade |
-| Fila | RabbitMQ | Comunicação assíncrona, desacoplamento entre serviços |
-| API Gateway | Kong 3.6 | Roteamento por path, rate limiting, extensível |
-| Load Balancer | Nginx | Distribuição round-robin entre instâncias |
-| Logs | Winston | Logs estruturados em JSON |
-| Métricas | Prometheus + Grafana | Coleta e visualização de latência, erros e throughput |
-| Orquestração | Docker Compose | Ambiente reproduzível com um único comando |
+| Camada | Tecnologia |
+|--------|-----------|
+| Frontend | Next.js 14 + Tailwind CSS |
+| Backend | Node.js + Express + TypeScript |
+| Banco de dados | PostgreSQL 15 |
+| Mensageria | RabbitMQ |
+| API Gateway | Kong 3.6 (DB-less, declarativo) |
+| Load Balancer | Nginx (round-robin) |
+| Logs | Winston (JSON estruturado) |
+| Métricas | Prometheus Client (endpoint /metrics) |
+| Observabilidade | Grafana (dashboard provisionado) |
+| Deploy backend | Railway |
+| Deploy frontend | Vercel |
+| Orquestração local | Docker Compose |
 
 ---
 
 ## Requisitos Distribuídos
 
-**Controle de Concorrência** — Lock otimista no banco para prevenir overselling mesmo sob carga simultânea.
+**Controle de Concorrência** — SELECT FOR UPDATE no PostgreSQL durante reserva de ingressos. Garante que compras simultâneas não causem overselling.
 
-**Resiliência** — Retry com backoff exponencial e fallback em falhas de comunicação entre serviços.
+**Idempotência** — Header `Idempotency-Key` obrigatório em POST /orders. Retries não geram pedidos duplicados.
 
-**Idempotência** — Chave única por requisição de compra, impedindo duplicidade em cenários de retry.
+**Resiliência** — Retry com backoff exponencial (500ms → 1s → 2s, 3 tentativas) na chamada ao payment-service.
 
-**Comunicação Assíncrona** — RabbitMQ desacopla o fluxo de pagamento e notificação do fluxo principal de compra.
+**Padrão SAGA** — Compensação automática de estoque se o pagamento falhar após a reserva.
+
+**Comunicação Assíncrona** — RabbitMQ desacopla notificação do fluxo principal. Falha no RabbitMQ não cancela pedidos confirmados.
 
 ---
 
-## Como Executar
+## Como Executar Localmente
 
 **Pré-requisitos:** Docker e Docker Compose instalados.
 
@@ -98,20 +151,30 @@ docker-compose up --build
 
 ## Estrutura do Repositório
 
+```
 ticket-system-distributed/
 ├── services/
-│   ├── auth-service/
-│   ├── event-service/
-│   ├── order-service/
-│   ├── payment-service/
-│   └── notification-service/
+│   ├── auth-service/          # Autenticação JWT + perfis user/admin
+│   ├── event-service/         # Gestão de eventos e estoque
+│   ├── order-service/         # Fluxo de compra
+│   ├── payment-service/       # Mock de pagamento
+│   ├── notification-service/  # Consumidor RabbitMQ
+│   ├── gateway/               # Container consolidado (Railway)
+│   └── shared/
+│       ├── logger/            # Winston
+│       ├── metrics/           # Prometheus client
+│       └── middleware/        # authMiddleware + adminMiddleware
+├── frontend/                  # Next.js 14 + Tailwind
 ├── infra/
-│   ├── nginx/nginx.conf
-│   └── prometheus/prometheus.yml
-├── docs/
+│   ├── kong/                  # Kong declarativo (DB-less)
+│   ├── nginx/                 # Load balancer round-robin
+│   ├── prometheus/            # Coleta de métricas
+│   ├── grafana/               # Dashboard provisionado
+│   └── rabbitmq/              # Configuração do broker
 ├── docker-compose.yml
 ├── .env.example
 └── README.md
+```
 
 ---
 
@@ -119,7 +182,7 @@ ticket-system-distributed/
 
 | Nome | Escopo |
 |------|--------|
-| Yorran | Infraestrutura, orquestração, API Gateway, Load Balancer, observabilidade |
+| Yorran | Infraestrutura, deploy, gateway, integração frontend-backend, CI/CD |
 | Levi | auth-service, event-service |
 | Leo | order-service, payment-service, notification-service |
 
@@ -129,5 +192,5 @@ ticket-system-distributed/
 
 | Item | Data |
 |------|------|
-| Relatório + Repositório + Apresentação | 08/06/2026 |
+| Relatório + Repositório | 08/06/2026 |
 | Apresentação presencial | 15/06/2026 |
