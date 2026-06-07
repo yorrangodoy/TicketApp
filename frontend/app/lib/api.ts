@@ -141,3 +141,55 @@ export async function buyTicket(
 
   return res.json();
 }
+
+/* Decodifica o payload do JWT sem validar assinatura (só leitura client-side) */
+export function getRoleFromToken(): string | null {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.role ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/* Cria um novo evento (admin only) */
+export async function createEvent(data: {
+  title: string;
+  description: string;
+  date: string;
+  venue: string;
+  total_tickets: number;
+  price: number;
+}): Promise<{ event: Evento }> {
+  const token = getToken();
+  const res = await fetch(`${EVENT_URL}/events`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    throw new Error(d.message ?? d.error ?? 'Erro ao criar evento');
+  }
+  return res.json();
+}
+
+/* Deleta um evento (admin only) */
+export async function deleteEvent(id: string | number): Promise<void> {
+  const token = getToken();
+  const res = await fetch(`${EVENT_URL}/events/${id}`, {
+    method: 'DELETE',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+  if (!res.ok && res.status !== 204) {
+    const d = await res.json().catch(() => ({}));
+    throw new Error(d.message ?? d.error ?? 'Erro ao deletar evento');
+  }
+}
