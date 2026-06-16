@@ -10,7 +10,9 @@ import {
   getRoleFromToken,
   createEvent,
   deleteEvent,
+  getLogs,
   type Evento,
+  type LogEntry,
 } from "../lib/api";
 
 /* Formata preço em reais */
@@ -51,6 +53,10 @@ export default function EventosPage() {
     total_tickets: 100,
     price: 0,
   });
+
+  const [logs, setLogs]           = useState<LogEntry[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+  const [showLogs, setShowLogs]   = useState(false);
 
   useEffect(() => {
     /* Redireciona para login se não houver token */
@@ -113,6 +119,19 @@ export default function EventosPage() {
     }
   }
 
+  async function handleCarregarLogs() {
+    setLoadingLogs(true);
+    try {
+      const data = await getLogs();
+      setLogs(data);
+      setShowLogs(true);
+    } catch {
+      setLogs([]);
+    } finally {
+      setLoadingLogs(false);
+    }
+  }
+
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--bg-base)" }}>
       {/* Header */}
@@ -136,25 +155,41 @@ export default function EventosPage() {
             </span>
           )}
         </div>
-        <button
-          onClick={handleLogout}
-          className="rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200"
-          style={{
-            backgroundColor: "transparent",
-            color: "var(--text-muted)",
-            border: "1px solid var(--border)",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--error)";
-            (e.currentTarget as HTMLButtonElement).style.color = "var(--error)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)";
-            (e.currentTarget as HTMLButtonElement).style.color = "var(--text-muted)";
-          }}
-        >
-          Sair
-        </button>
+        <div className="flex items-center gap-3">
+          {isAdmin && (
+            <button
+              onClick={handleCarregarLogs}
+              disabled={loadingLogs}
+              className="rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 disabled:opacity-50"
+              style={{
+                backgroundColor: 'rgba(37,99,235,0.15)',
+                color: 'var(--accent-light)',
+                border: '1px solid rgba(37,99,235,0.3)',
+              }}
+            >
+              {loadingLogs ? 'Carregando...' : '📋 Logs'}
+            </button>
+          )}
+          <button
+            onClick={handleLogout}
+            className="rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200"
+            style={{
+              backgroundColor: "transparent",
+              color: "var(--text-muted)",
+              border: "1px solid var(--border)",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--error)";
+              (e.currentTarget as HTMLButtonElement).style.color = "var(--error)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)";
+              (e.currentTarget as HTMLButtonElement).style.color = "var(--text-muted)";
+            }}
+          >
+            Sair
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 px-6 py-10 max-w-6xl mx-auto w-full">
@@ -276,6 +311,74 @@ export default function EventosPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Painel de Logs do Sistema */}
+        {showLogs && isAdmin && (
+          <div className="mt-8 rounded-2xl p-6"
+            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                📋 Logs do Sistema
+              </h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCarregarLogs}
+                  className="rounded-lg px-3 py-1.5 text-xs font-semibold"
+                  style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+                >
+                  🔄 Atualizar
+                </button>
+                <button
+                  onClick={() => setShowLogs(false)}
+                  className="rounded-lg px-3 py-1.5 text-xs font-semibold"
+                  style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+                >
+                  ✕ Fechar
+                </button>
+              </div>
+            </div>
+            {logs.length === 0 ? (
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Nenhum log disponível.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                      {['Timestamp','Nível','Serviço','Mensagem'].map(h => (
+                        <th key={h} className="text-left py-2 px-3 font-semibold"
+                          style={{ color: 'var(--text-muted)' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {logs.map((log, i) => (
+                      <tr key={i}
+                        style={{ borderBottom: '1px solid var(--border)',
+                          backgroundColor: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
+                        <td className="py-2 px-3 font-mono" style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                          {new Date(log.timestamp).toLocaleString('pt-BR')}
+                        </td>
+                        <td className="py-2 px-3 font-bold uppercase text-xs">
+                          <span style={{
+                            color: log.level === 'error' ? 'var(--error)'
+                                 : log.level === 'warn'  ? '#f59e0b'
+                                 : 'var(--accent-light)',
+                          }}>{log.level}</span>
+                        </td>
+                        <td className="py-2 px-3 font-mono" style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                          {log.service}
+                        </td>
+                        <td className="py-2 px-3" style={{ color: 'var(--text-primary)' }}>
+                          {log.message}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </main>
