@@ -193,3 +193,36 @@ export async function deleteEvent(id: string | number): Promise<void> {
     throw new Error(d.message ?? d.error ?? 'Erro ao deletar evento');
   }
 }
+
+export interface LogEntry {
+  timestamp: string;
+  level: string;
+  message: string;
+  service: string;
+}
+
+export async function getLogs(): Promise<LogEntry[]> {
+  const token = getToken();
+  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+  const [resEvent, resGateway] = await Promise.allSettled([
+    fetch(`${EVENT_URL}/logs`, { headers }),
+    fetch(`${ORDER_URL}/logs`, { headers }),
+  ]);
+
+  const logs: LogEntry[] = [];
+
+  if (resEvent.status === 'fulfilled' && resEvent.value.ok) {
+    const data = await resEvent.value.json();
+    logs.push(...(data.logs ?? []));
+  }
+  if (resGateway.status === 'fulfilled' && resGateway.value.ok) {
+    const data = await resGateway.value.json();
+    logs.push(...(data.logs ?? []));
+  }
+
+  // Ordena do mais recente pro mais antigo
+  return logs.sort((a, b) =>
+    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
+}

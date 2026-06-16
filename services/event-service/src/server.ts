@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import logger from '../../shared/logger';
+import { getLogBuffer } from '../../shared/logger';
+import { authMiddleware, adminMiddleware } from '../../shared/middleware/auth';
 import { register, metricsMiddleware } from '../../shared/metrics';
 import { initializeDatabase } from './db';
 import eventRoutes from './routes/events';
@@ -21,6 +23,10 @@ app.get('/health', (_req, res) => {
 app.get('/metrics', async (_req, res) => {
   res.set('Content-Type', register.contentType);
   res.end(await register.metrics());
+});
+
+app.get('/logs', authMiddleware, adminMiddleware, (_req, res) => {
+  res.json({ logs: getLogBuffer() });
 });
 
 async function start(): Promise<void> {

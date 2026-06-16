@@ -4,6 +4,8 @@ import express from 'express';
 import cors from 'cors';
 
 import logger from '../../shared/logger';
+import { getLogBuffer } from '../../shared/logger';
+import { authMiddleware, adminMiddleware } from '../../shared/middleware/auth';
 import orderRoutes from '../../order-service/src/routes/order.routes';
 import paymentRoutes from '../../payment-service/src/routes/payment.routes';
 import { startConsumer } from '../../notification-service/src/consumer';
@@ -18,6 +20,10 @@ app.use('/orders', orderRoutes);
 app.use('/payment', paymentRoutes);
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', service: 'gateway' }));
+
+app.get('/logs', authMiddleware, adminMiddleware, (_req, res) => {
+  res.json({ logs: getLogBuffer() });
+});
 
 async function start(): Promise<void> {
   await initializeDatabase();
