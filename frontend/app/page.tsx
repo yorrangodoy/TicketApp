@@ -56,15 +56,14 @@ export default function LoginPage() {
         >
           {/* Logo / Título */}
           <div className="mb-8 text-center">
-            <div
-              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl text-3xl shadow-lg"
-              style={{
-                background: "linear-gradient(135deg, var(--accent), var(--accent-light))",
-                boxShadow: "0 10px 30px rgba(124,58,237,0.45)",
-              }}
-            >
-              🎟
-            </div>
+            <img
+              src="/logo.png"
+              alt="TicketApp"
+              width={64}
+              height={64}
+              className="mx-auto mb-2"
+              style={{ objectFit: "contain" }}
+            />
             <h1
               className="text-3xl font-bold tracking-tight"
               style={{ color: "var(--text-primary)" }}
