@@ -1,3 +1,4 @@
+// rebuild: logger com buffer de memoria
 /* Ponto de entrada do gateway: consolida order, payment e notification num único processo */
 
 import express from 'express';
