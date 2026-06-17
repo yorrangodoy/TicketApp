@@ -187,17 +187,15 @@ export default function EventosPage() {
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-lg shadow-lg"
-              style={{
-                background: "linear-gradient(135deg, var(--accent), var(--accent-light))",
-                boxShadow: "0 6px 18px rgba(124,58,237,0.45)",
-              }}
-            >
-              🎟
-            </div>
-            <span className="text-xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
-              Ticket<span style={{ color: "var(--accent-light)" }}>App</span>
+            <img
+              src="/logo.png"
+              alt="TicketApp"
+              width={36}
+              height={36}
+              style={{ objectFit: "contain" }}
+            />
+            <span className="text-lg font-bold tracking-tight" style={{ color: "var(--accent-light)" }}>
+              TicketApp
             </span>
             {isAdmin && (
               <span
