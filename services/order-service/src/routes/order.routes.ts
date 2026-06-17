@@ -84,6 +84,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response): Promise<vo
   }
 
   const userId = req.user!.id;
+  const userEmail = req.user!.email;
 
   try {
     // d. Busca preço do evento no event-service para calcular valor_total
@@ -218,6 +219,8 @@ router.post('/', authMiddleware, async (req: Request, res: Response): Promise<vo
         order_id: order['id'] as number,
         user_id: userId,
         event_id,
+        email: userEmail,
+        evento: event.title,
       });
     } catch (mqErr) {
       logger.error('Falha ao publicar confirmação no RabbitMQ — notificação perdida', {
