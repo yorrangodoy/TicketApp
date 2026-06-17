@@ -11,6 +11,8 @@ export interface OrderConfirmedPayload {
   order_id: number;
   user_id: number;
   event_id: number;
+  email: string;
+  evento: string;
 }
 
 export async function publishOrderConfirmed(payload: OrderConfirmedPayload): Promise<void> {
