@@ -402,7 +402,7 @@ export default function EventosPage() {
                       style={{ color: "var(--text-muted)" }}
                     >
                       <span className="flex items-center gap-2">📅 {formatarData(evento.date)}</span>
-                      <span className="flex items-center gap-2">📍 {evento.location}</span>
+                      <span className="flex items-center gap-2">📍 {evento.venue}</span>
                     </div>
 
                     {/* Preço em destaque */}
