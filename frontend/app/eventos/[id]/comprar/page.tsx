@@ -117,9 +117,12 @@ export default function ComprarPage() {
           borderBottom: "1px solid var(--border)",
         }}
       >
-        <span className="text-xl font-bold tracking-tight" style={{ color: "var(--accent-light)" }}>
-          🎟 TicketApp
-        </span>
+        <div className="flex items-center gap-2">
+          <img src="/logo.png" alt="TicketApp" width={28} height={28} style={{ objectFit: "contain" }} />
+          <span className="text-xl font-bold tracking-tight" style={{ color: "var(--accent-light)" }}>
+            TicketApp
+          </span>
+        </div>
         <Link
           href="/eventos"
           className="text-sm transition hover:underline"
@@ -147,7 +150,7 @@ export default function ComprarPage() {
             </h1>
             <div className="flex flex-col gap-1 text-sm mb-4" style={{ color: "var(--text-muted)" }}>
               <span>📅 {formatarData(evento.date)}</span>
-              <span>📍 {evento.location}</span>
+              <span>📍 {evento.venue}</span>
               <span>🎫 {evento.available_tickets} ingresso{evento.available_tickets !== 1 ? "s" : ""} restante{evento.available_tickets !== 1 ? "s" : ""}</span>
             </div>
             <p className="text-2xl font-bold" style={{ color: "var(--accent-light)" }}>
@@ -184,29 +187,45 @@ export default function ComprarPage() {
               ) : (
                 /* Compra confirmada */
                 <div
-                  className="rounded-xl px-5 py-5"
+                  className="rounded-2xl px-6 py-8 text-center flex flex-col items-center gap-4"
                   style={{
-                    backgroundColor: "rgba(52,211,153,0.1)",
-                    border: "1px solid rgba(52,211,153,0.3)",
+                    backgroundColor: "rgba(52,211,153,0.08)",
+                    border: "1px solid rgba(52,211,153,0.25)",
                   }}
                 >
-                  <p className="text-base font-semibold" style={{ color: "var(--success)" }}>
-                    ✅ Compra confirmada!
-                  </p>
+                  <div
+                    className="w-16 h-16 rounded-full flex items-center justify-center text-3xl"
+                    style={{ backgroundColor: "rgba(52,211,153,0.15)" }}
+                  >
+                    ✅
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold mb-1" style={{ color: "var(--success)" }}>
+                      Ingresso garantido!
+                    </p>
+                    <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                      Sua compra foi confirmada com sucesso.
+                    </p>
+                  </div>
                   {resultado?.transaction_id && (
-                    <p className="text-sm mt-2" style={{ color: "var(--text-muted)" }}>
-                      ID da transação:{" "}
+                    <div
+                      className="w-full rounded-xl px-4 py-3 text-left"
+                      style={{ backgroundColor: "var(--bg-input)", border: "1px solid var(--border)" }}
+                    >
+                      <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
+                        ID da transação
+                      </p>
                       <code
-                        className="rounded px-2 py-0.5 font-mono text-xs"
-                        style={{ backgroundColor: "var(--bg-input)", color: "var(--accent-light)" }}
+                        className="font-mono text-xs break-all"
+                        style={{ color: "var(--accent-light)" }}
                       >
                         {resultado.transaction_id}
                       </code>
-                    </p>
+                    </div>
                   )}
                   <Link
                     href="/eventos"
-                    className="mt-4 inline-block rounded-lg px-4 py-2 text-sm font-medium transition"
+                    className="w-full rounded-xl py-3 text-sm font-semibold text-center transition-all duration-200"
                     style={{ backgroundColor: "var(--accent)", color: "#fff" }}
                   >
                     Ver outros eventos

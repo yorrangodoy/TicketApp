@@ -33,7 +33,7 @@ export interface Evento {
   id: string | number;
   title: string;
   date: string;
-  location: string;
+  venue: string;
   price: number;
   available_tickets: number;
 }
